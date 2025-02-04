@@ -26,10 +26,14 @@ def get_token():
     }
     data={"grant_type":"client_credentials"}
     
-    #post request, convert to json and parse access token
+    #post request, convert to json and extracts access token
     result=post(url, headers=headers, data=data)
     json_result= json.loads(result.content)
     token= json_result["access_token"]
     return token
+
+#Authorization headers are used in api calls by client to inform spotify that an authorized user is trying to access resource.
+def get_auth_header(token):
+    return {"Authorization":"Bearer "+ token}
 
 token=get_token()
