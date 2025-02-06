@@ -1,3 +1,4 @@
+#Client credentials flow
 from dotenv import load_dotenv
 import os
 import base64
@@ -57,6 +58,17 @@ def top_songs(token):
     json_result= json.loads(result.content)["tracks"][0]
     print(json_result["name"])
     
+    
+def user_top_tracks(token):
+    type="tracks"
+    url=f"https://api.spotify.com/v1/me/top/{type}"    
+    headers=get_auth_header(token)
+    
+    result=get(url, headers=headers)
+    json_result=json.loads(result.content)
+    print(json_result)
+    
 token=get_token()
 result=top_songs(token)
 #result=search_artist(token,"bts")
+
