@@ -5,6 +5,7 @@ import urllib.parse
 import base64
 from requests import post,get
 from datetime import datetime
+import pandas as pd
 
 load_dotenv()
 
@@ -25,7 +26,7 @@ def home():
 
 @app.route('/login')
 def login():
-    scope="user-top-read user-library-read"
+    scope="user-top-read user-library-read playlist-read-private"
     params={
         'client_id':client_id,
         'redirect_uri':redirect_uri,
@@ -94,10 +95,63 @@ def get_top_tracks():
         
         data.append({'track_id':track_id,'track_name':track_name,'track_artist':track_artist})    
         
-    return (data)
+    session['data']=data    
+    return redirect('/playlists')
     
+@app.route('/playlists')
+def get_current_user_playlists():
     
-@app.route('/refresh_token')
+    if 'access_token' not in session:
+        return redirect('/login')
+    if datetime.now().timestamp() > session['expires_at']:
+        return redirect('/refresh')
+    
+    type="tracks"
+    url=f"https://api.spotify.com/v1/me/playlists"
+    
+    header={"Authorization":"Bearer "+ session['access_token']}
+    response=get(url,headers=header)
+    result=response.json()
+    
+    #result=jsonify(result_first['items'][0]['artists'][0]['name'])
+    data=session['data']
+    for i in result['items']:
+        track_id=i['id']
+        
+        data.append({'track_id':track_id})    
+        
+    session['data']=data      
+    return redirect('/liked_songs')
+
+@app.route('/liked_songs')
+def get_liked_songs():
+    
+    if 'access_token' not in session:
+        return redirect('/login')
+    if datetime.now().timestamp() > session['expires_at']:
+        return redirect('/refresh')
+    
+    url=f"https://api.spotify.com/v1/me/tracks"
+    
+    header={"Authorization":"Bearer "+ session['access_token']}
+    response=get(url,headers=header)
+    result=response.json()
+    
+    #result=jsonify(result_first['items'][0]['artists'][0]['name'])
+    data=session['data']
+    for i in result['items']:
+        track=i['track']
+        track_id=track['id']
+        track_name=track['name']
+        track_artist=track['artists'][0]['name']
+        
+        data.append({'track_id':track_id,'track_name':track_name,'track_artist':track_artist})   
+        
+    df=pd.DataFrame(data)
+    df.to_csv('songs.csv',index=False)
+    return redirect('/')    
+    
+@app.route('/refresh')
 def refresh_token():
     if 'refresh_token' not in session:
         return redirect('/login')
