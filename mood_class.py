@@ -52,8 +52,11 @@ def callback():
             'client_id':client_ID,
             'client_secret':client_secret
         }
-    response= requests.post(token_url,data=req_body)    
+    response= request.post(token_url,data=req_body)    
     token_info=response.json()
     
     print(token_info)
     return redirect('/')
+
+if __name__ == "__main__":
+    app.run(debug=True)
